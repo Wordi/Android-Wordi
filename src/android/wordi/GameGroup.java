@@ -1,4 +1,4 @@
-package test.image;
+package android.wordi;
 
 import android.content.Context;
 import android.graphics.Color;

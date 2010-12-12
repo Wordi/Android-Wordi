@@ -1,4 +1,4 @@
-package test.image;
+package android.wordi;
 
 import java.util.ArrayList;
 
