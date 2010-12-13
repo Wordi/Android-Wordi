@@ -7,10 +7,13 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ScaleGestureDetector;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.GestureDetector.SimpleOnGestureListener;
 import android.view.ViewGroup.LayoutParams;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.Scroller;
@@ -21,6 +24,13 @@ public class Board extends ViewGroup {
 	private int pieceHeight, pieceWidth;
 	private Context context;
 	private final int padding = 20;
+	private ScaleGestureDetector mScaleGestureDetector;
+	private float mScaleFactor = 1.f;
+	private static final int INVALID_POINTER_ID = -1;
+	private int originalWidth, originalHeight;
+
+	// The ‘active pointer’ is the one currently moving our object.
+	private int mActivePointerId = INVALID_POINTER_ID;
 	
 	/* Static Vars */
 	private static int NUM_COLS = 15;
@@ -32,6 +42,8 @@ public class Board extends ViewGroup {
     public Board(Context context) {
         super(context);
         this.context = (main) context;
+        this.originalHeight = this.originalWidth = 800;
+        this.mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
         for( int i = 0; i < NUM_ROWS; i++ ){
         	for( int j = 0; j < NUM_COLS; j++ ){
         		BoardPlaceHolder temp = new BoardPlaceHolder( context );
@@ -47,27 +59,33 @@ public class Board extends ViewGroup {
     @Override
     public void onAttachedToWindow(){
     	parent = (View) this.getParent();
+//    	WindowManager.LayoutParams lp = (android.view.WindowManager.LayoutParams) this.getLayoutParams();
+//    	this.originalHeight = lp.height;
+//    	this.originalWidth = lp.width;
     }
     @Override
     public void onDraw(Canvas canvas) {
     }
     
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev){		
-    	return false;
-    }
+//    @Override
+//    public boolean onInterceptTouchEvent(MotionEvent ev){		
+//    	return false;
+//    }
     
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+    	this.mScaleGestureDetector.onTouchEvent(event);
     	int scrollX = 0;
 		int scrollY = 0;
 		Point delta = new Point();
-    	switch( event.getAction() ){
+    	switch( event.getAction() & MotionEvent.ACTION_MASK ){
     		case MotionEvent.ACTION_DOWN:
     			start.x = (int) event.getX();
     			start.y = (int) event.getY();
-                return true;
+    			mActivePointerId = event.getPointerId(0);
+                break;
     		case MotionEvent.ACTION_MOVE:
+//    			final int pointerIndex = event.findPointerIndex(mActivePointerId);
     			Point changed = new Point();
     			changed.x = (int) event.getX();
     			changed.y = (int) event.getY();
@@ -76,8 +94,9 @@ public class Board extends ViewGroup {
 				delta.y = start.y - changed.y;
 
 				parent.scrollBy(delta.x, delta.y);
-    			return true;
+				break;
     		case MotionEvent.ACTION_UP:
+//    			mActivePointerId = INVALID_POINTER_ID;
     			Log.i("BoardGroup Scroll", parent.getScrollX() + " : " + parent.getScrollY() );
 				scrollX = parent.getScrollX();
 				scrollY = parent.getScrollY();
@@ -90,7 +109,10 @@ public class Board extends ViewGroup {
 				if( parent.getScrollY() + parent.getHeight() > this.getHeight() + padding )
 					scrollY = this.getHeight() - parent.getHeight() + padding;
 				parent.scrollTo( scrollX, scrollY );
-    			return true;
+    			break;
+    		case MotionEvent.ACTION_CANCEL:
+    	        mActivePointerId = INVALID_POINTER_ID;
+    	        break;
     	}
         return true;
     }
@@ -126,9 +148,19 @@ public class Board extends ViewGroup {
 	@Override
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
 		WindowManager.LayoutParams params = (android.view.WindowManager.LayoutParams) this.getLayoutParams();
+		params.width = (int) (originalWidth * this.mScaleFactor);
+		params.height = (int) (originalHeight * this.mScaleFactor);
+		this.setLayoutParams(params);
 		this.setMeasuredDimension( params.width, params.height );
 	}
 	
+	public float getScaleFactor(){
+		return this.mScaleFactor;
+	}
+	
+	public void setScaleFactor( float f ){
+		this.mScaleFactor = f;
+	}
 	public void addPiece()
 	{
 		Tile tempG = new Tile( getContext() );
@@ -138,6 +170,17 @@ public class Board extends ViewGroup {
         tempG.setLetter( x );
         this.addView( tempG );
 	}
-
 	
+	private class ScaleListener extends ScaleGestureDetector.SimpleOnScaleGestureListener {
+	    @Override
+	    public boolean onScale(ScaleGestureDetector detector) {
+	    	Log.i("Scale", "Detector " + detector.getScaleFactor() );
+	        mScaleFactor *= detector.getScaleFactor();
+	        Log.i("Scale", "My Factor " + mScaleFactor );
+	        // Don't let the object get too small or too large.
+	        mScaleFactor = Math.max(0.5f, Math.min(mScaleFactor, 2.5f));
+	        requestLayout();
+	        return true;
+	    }
+	}
 }

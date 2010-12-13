@@ -61,7 +61,7 @@ class Tile extends ImageView {
 		public Tile(Context context) {
 			super(context);
 			this.context = (main) context;
-			myGestureDetector = new GestureDetector( context, new MyGestureDetector() );
+			myGestureDetector = new GestureDetector( context, new MyGestureListener() );
 			animateType = -1; /* Invalid to start */
 			/* Create Params */
 			params = new WindowManager.LayoutParams();
@@ -268,7 +268,7 @@ class Tile extends ImageView {
         	requestLayout();
         }
         
-        public class MyGestureDetector extends SimpleOnGestureListener {
+        public class MyGestureListener extends SimpleOnGestureListener {
         	@Override
         	public boolean onDown( MotionEvent e ){
         		/* Record current settings in case we need to jump back to them */
