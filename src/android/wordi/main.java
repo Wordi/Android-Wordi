@@ -41,8 +41,6 @@ public class main extends Activity{
         /* Board View */
         Board mBoard = new Board(this);
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams();
-        lp.width = 700;
-        lp.height = 700;
         mBoard.setLayoutParams( lp );
         
         /* Board ViewGroup */

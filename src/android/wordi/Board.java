@@ -25,9 +25,11 @@ public class Board extends ViewGroup {
 	private Context context;
 	private final int padding = 20;
 	private ScaleGestureDetector mScaleGestureDetector;
+	private GestureDetector mGestureDetector;
 	private float mScaleFactor = 1.f;
 	private static final int INVALID_POINTER_ID = -1;
 	private int originalWidth, originalHeight;
+	private Scroller mScroller;
 
 	// The ‘active pointer’ is the one currently moving our object.
 	private int mActivePointerId = INVALID_POINTER_ID;
@@ -42,8 +44,10 @@ public class Board extends ViewGroup {
     public Board(Context context) {
         super(context);
         this.context = (main) context;
-        this.originalHeight = this.originalWidth = 800;
+        this.mScroller = new Scroller(context);
+        this.originalHeight = this.originalWidth = 1000;
         this.mScaleGestureDetector = new ScaleGestureDetector(context, new ScaleListener());
+        this.mGestureDetector = new GestureDetector(context, new MyGestureListener() );
         for( int i = 0; i < NUM_ROWS; i++ ){
         	for( int j = 0; j < NUM_COLS; j++ ){
         		BoardPlaceHolder temp = new BoardPlaceHolder( context );
@@ -75,11 +79,19 @@ public class Board extends ViewGroup {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
     	this.mScaleGestureDetector.onTouchEvent(event);
+    	this.mGestureDetector.onTouchEvent(event);
     	int scrollX = 0;
 		int scrollY = 0;
 		Point delta = new Point();
     	switch( event.getAction() & MotionEvent.ACTION_MASK ){
     		case MotionEvent.ACTION_DOWN:
+				/*
+				* If being flinged and user touches, stop the fling. isFinished
+				* will be false if being flinged.
+				*/
+				if (!mScroller.isFinished()) {
+				mScroller.abortAnimation();
+				}
     			start.x = (int) event.getX();
     			start.y = (int) event.getY();
     			mActivePointerId = event.getPointerId(0);
@@ -182,5 +194,16 @@ public class Board extends ViewGroup {
 	        requestLayout();
 	        return true;
 	    }
+	}
+	
+	private class MyGestureListener extends GestureDetector.SimpleOnGestureListener {
+		public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY){
+			Log.i("Fling", "Velocity " + velocityX + " : " + velocityY );
+			mScroller.fling( (int) e2.getX(), (int) e2.getY(), (int) -velocityX, (int) -velocityY, 0, getWidth(), 0, getHeight() );
+			int deltaX = mScroller.getFinalX() - mScroller.getStartX();
+			int deltaY = mScroller.getFinalY() - mScroller.getStartY();
+//			parent.scrollBy( deltaX, deltaY );
+			return true;
+		}
 	}
 }

@@ -28,6 +28,7 @@ import android.view.ViewGroup.LayoutParams;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.ImageView;
+import android.widget.Scroller;
 
 class Tile extends ImageView {
     	
@@ -43,6 +44,7 @@ class Tile extends ImageView {
     	private Point finishScreenPosition = new Point();
 		private int animateType;
 		private Boolean isAnimating = false;
+		private Boolean mLongPress = false;
 		private Context context;
 		private DropView mLastDropTarget;
 	    /* Temps to avoid GC */
@@ -74,10 +76,9 @@ class Tile extends ImageView {
 			/* Paints */
 			paintText.setColor( Color.WHITE );
 			paintText.setTextAlign( Align.CENTER );
-			paintText.setTextSize(20);
 			Typeface type = Typeface.createFromAsset(context.getAssets(), "fonts/GothamRnd-Medium.ttf");
 			paintText.setTypeface( type );
-			
+			paintText.setTextSize(20);
 			paintBackground.setColor( Color.BLUE );
 			
 			this.setBackgroundDrawable( this.getResources().getDrawable( R.drawable.tile ) );
@@ -109,15 +110,26 @@ class Tile extends ImageView {
 //			}
 //			return true;
 //		}
+		
+		@Override
+		public void onSizeChanged(int w, int h, int oldw, int oldh){
+			/* Change paint size */
+			this.paintText.setTextSize( (w * 3) / 7 );
+		}
+		@Override
+		protected void onAttachedToWindow (){
+			this.params = (android.view.WindowManager.LayoutParams) this.getLayoutParams();
+		}
+		
 		@Override
         public boolean onTouchEvent(MotionEvent event) {
-			this.params = (android.view.WindowManager.LayoutParams) this.getLayoutParams();
+			myGestureDetector.onTouchEvent(event);
 //			if( this.isAnimating )
 //				return true;
-			myGestureDetector.onTouchEvent(event);
 			switch( event.getAction() ){
 				/* Most events are handled by myGestureDetector */
 				case MotionEvent.ACTION_UP:
+					mLongPress = false;
 					this.finishScreenPosition.x = (int) event.getRawX();
 					this.finishScreenPosition.y = (int) event.getRawY();
 					
@@ -202,7 +214,7 @@ class Tile extends ImageView {
 			int deltaY = this.finishScreenPosition.y - this.startScreenPosition.y - ( this.getHeight() / 2 );
 			requestLayout();
 			Animation anim = new TranslateAnimation( deltaX, 0, deltaY, 0 );
-			anim.setDuration(500);
+			anim.setDuration(250);
 			this.startAnimation(anim);
 			isAnimating = true;
 		}
@@ -292,6 +304,8 @@ class Tile extends ImageView {
         	
         	@Override
         	public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY){
+//    			if( !mLongPress )
+//    				return false;
         		Log.i("XY", e2.getX() + " : " + e2.getY() );
         		Log.i("Raw XY", e2.getRawX() + " : " + e2.getRawY() );
         		getLocationOnScreen( mCoordinatesTemp );
@@ -319,6 +333,11 @@ class Tile extends ImageView {
 				}
     			doScrollByPosition( e2.getRawX(), e2.getRawY() );
         		return true;
+        	}
+        	
+        	@Override
+        	public void onLongPress(MotionEvent e){
+        		mLongPress = true;
         	}
         }
     }
