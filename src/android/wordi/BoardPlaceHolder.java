@@ -25,7 +25,10 @@ public class BoardPlaceHolder extends DropView {
 		for( int i = 0; i < numChildren; i++ ){
 			View child = this.getChildAt(i);
 			WindowManager.LayoutParams params = (android.view.WindowManager.LayoutParams) child.getLayoutParams();
-			child.layout( 0, 0, this.getWidth(), this.getHeight() );
+			params.width = this.getWidth();
+			params.height = this.getHeight();
+			child.setLayoutParams(params);
+			child.layout( 0, 0, params.width, params.height );
 		}
 	}
 	

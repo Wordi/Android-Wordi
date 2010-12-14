@@ -28,7 +28,7 @@ public class RackPlaceHolder extends DropView {
 			WindowManager.LayoutParams params = (android.view.WindowManager.LayoutParams) child.getLayoutParams();
 			params.width = this.getWidth() - this.mPadding;
 			params.height = this.getHeight() - this.mPadding;
-			this.setLayoutParams(params);
+			child.setLayoutParams(params);
 			child.layout( this.mPadding, this.mPadding, params.width, params.height );
 		}
 	}
